@@ -21,6 +21,15 @@ const mockRequests = [
     endDate: '2024-03-15',
     reason: 'Sağlık kontrolü',
     status: 'approved'
+  },
+  {
+    id: 3,
+    employeeId: 'emp3',
+    employeeName: 'Mehmet Kaya',
+    startDate: '2024-03-20',
+    endDate: '2024-03-25',
+    reason: 'Tatil',
+    status: 'rejected'
   }
 ];
 
@@ -36,14 +45,16 @@ export const login = async (credentials) => {
     return {
       data: {
         token: 'mock-token-hr',
-        role: 'hr'
+        role: 'hr',
+        userId: 'hr1'
       }
     };
   } else if (credentials.email === 'employee@example.com' && credentials.password === 'emp123') {
     return {
       data: {
         token: 'mock-token-employee',
-        role: 'employee'
+        role: 'employee',
+        userId: 'emp1'
       }
     };
   }
@@ -74,8 +85,6 @@ export const createLeaveRequest = async (requestData) => {
   await delay(500);
   const newRequest = {
     id: mockRequests.length + 1,
-    employeeId: 'current-user',
-    employeeName: 'Mevcut Kullanıcı',
     ...requestData,
     status: 'pending'
   };
@@ -88,8 +97,9 @@ export const updateLeaveStatus = async (requestId, newStatus) => {
   const request = mockRequests.find(r => r.id === requestId);
   if (request) {
     request.status = newStatus;
+    return { data: request };
   }
-  return { data: request };
+  throw new Error('İzin talebi bulunamadı');
 };
 
 export const analyzeLeaveRequests = async () => {
@@ -101,7 +111,7 @@ export const analyzeLeaveRequests = async () => {
       pendingRequests: mockRequests.filter(r => r.status === 'pending').length,
       rejectedRequests: mockRequests.filter(r => r.status === 'rejected').length,
       averageDuration: 3.5,
-      mostCommonReason: 'Aile ziyareti'
+      mostCommonReason: 'Tatil'
     }
   };
 };
