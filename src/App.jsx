@@ -6,7 +6,8 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import trLocale from 'date-fns/locale/tr';
 
 // Pages
-import Login from './pages/Login';
+import Home from './pages/Home';
+import Login from './components/Login';
 import HRPanel from './pages/HRPanel';
 import EmployeePanel from './pages/EmployeePanel';
 import NotFound from './pages/NotFound';
@@ -62,12 +63,13 @@ const App = () => {
         <Router>
           <Routes>
             {/* Public Routes */}
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             
             {/* Protected Routes */}
             <Route element={<Layout />}>
               <Route 
-                path="/hr" 
+                path="/hr-panel" 
                 element={
                   <PrivateRoute role="hr">
                     <HRPanel />
@@ -75,7 +77,7 @@ const App = () => {
                 } 
               />
               <Route 
-                path="/employee" 
+                path="/employee-panel" 
                 element={
                   <PrivateRoute role="employee">
                     <EmployeePanel />
@@ -83,9 +85,10 @@ const App = () => {
                 } 
               />
             </Route>
-
-            {/* Redirect root to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            
+            {/* Redirects */}
+            <Route path="/hr" element={<Navigate to="/hr-panel" replace />} />
+            <Route path="/employee" element={<Navigate to="/employee-panel" replace />} />
             
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />

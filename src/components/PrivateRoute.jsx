@@ -11,6 +11,11 @@ const PrivateRoute = ({ children, role }) => {
   }
 
   if (role && userRole !== role) {
+    if (userRole === 'hr') {
+      return <Navigate to="/hr-panel" replace />;
+    } else if (userRole === 'employee') {
+      return <Navigate to="/employee-panel" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 

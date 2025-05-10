@@ -42,7 +42,7 @@ const Layout = () => {
     {
       text: 'Dashboard',
       icon: <DashboardIcon />,
-      path: userRole === 'hr' ? '/hr' : '/employee'
+      path: userRole === 'hr' ? '/hr-panel' : '/employee-panel'
     },
     {
       text: 'Çıkış Yap',
