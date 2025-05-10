@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "LEAVE_REQUEST")
 public class LeaveRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,7 +14,7 @@ public class LeaveRequest {
     private LocalDate startDate;
     private LocalDate endDate;
     private String reason;
-    private String status; // "PENDING", "APPROVED", "REJECTED"
+    private String status; // "PENDING", "APPROVED", "REJECTED" veya "Bekliyor" olabilir
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

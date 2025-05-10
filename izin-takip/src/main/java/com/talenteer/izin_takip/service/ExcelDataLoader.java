@@ -16,7 +16,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
+// Bu sınıfı devre dışı bırakıyoruz çünkü com.talenteer.izintakip.config.DataInitializer sınıfı zaten veri yükleme işlemini yapıyor
+// @Component
 public class ExcelDataLoader implements CommandLineRunner {
     private final UserRepository userRepository;
     private final LeaveRequestRepository leaveRequestRepository;
@@ -44,6 +45,8 @@ public class ExcelDataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        System.out.println("ExcelDataLoader devre dışı bırakıldı. Veri yükleme işlemi yapılmayacak.");
+        /*
         InputStream is = new ClassPathResource("izinler.xlsx").getInputStream();
         Workbook workbook = new XSSFWorkbook(is);
         Sheet sheet = workbook.getSheetAt(0);
@@ -82,8 +85,10 @@ public class ExcelDataLoader implements CommandLineRunner {
             User user = userMap.get(calisanId);
             if (user == null) {
                 user = new User();
-                user.setUsername(adSoyad.replace(" ", "").toLowerCase());
-                user.setPassword("1234"); // default şifre
+                // Email formatında kullanıcı adı oluştur
+                user.setUsername(adSoyad.replace(" ", "").toLowerCase() + "@example.com");
+                // Varsayılan şifre
+                user.setPassword("1234");
                 user.setRole(unvan.equalsIgnoreCase("İK") ? "HR" : "EMPLOYEE");
                 user.setDepartment(pozisyon);
                 user = userRepository.save(user);
@@ -106,5 +111,6 @@ public class ExcelDataLoader implements CommandLineRunner {
             leaveRequestRepository.save(leave);
         }
         workbook.close();
+        */
     }
 } 
