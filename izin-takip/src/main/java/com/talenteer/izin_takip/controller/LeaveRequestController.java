@@ -49,16 +49,59 @@ public class LeaveRequestController {
         return leaveRequestRepository.save(leave);
     }
 
+    // DTO sınıfı
+    class LeaveRequestDTO {
+        private Long id;
+        private String reason;
+        private String status;
+        private String startDate;
+        private String endDate;
+        private Long userId;
+        private String firstName;
+        private String lastName;
+        private String email;
+        // getter/setter
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+        public String getReason() { return reason; }
+        public void setReason(String reason) { this.reason = reason; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+        public String getStartDate() { return startDate; }
+        public void setStartDate(String startDate) { this.startDate = startDate; }
+        public String getEndDate() { return endDate; }
+        public void setEndDate(String endDate) { this.endDate = endDate; }
+        public Long getUserId() { return userId; }
+        public void setUserId(Long userId) { this.userId = userId; }
+        public String getFirstName() { return firstName; }
+        public void setFirstName(String firstName) { this.firstName = firstName; }
+        public String getLastName() { return lastName; }
+        public void setLastName(String lastName) { this.lastName = lastName; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+    }
+
     // İK: Tüm izin taleplerini gör
     @GetMapping("/all")
-    public List<LeaveRequest> getAllLeaves() {
+    public List<LeaveRequestDTO> getAllLeaves() {
         System.out.println("Tüm izin talepleri getiriliyor...");
         List<LeaveRequest> allLeaves = leaveRequestRepository.findAll();
         System.out.println("Toplam " + allLeaves.size() + " izin talebi bulundu.");
-        for (LeaveRequest leave : allLeaves) {
-            System.out.println("ID: " + leave.getId() + ", Status: " + leave.getStatus());
-        }
-        return allLeaves;
+        return allLeaves.stream().map(leave -> {
+            LeaveRequestDTO dto = new LeaveRequestDTO();
+            dto.setId(leave.getId());
+            dto.setReason(leave.getReason());
+            dto.setStatus(leave.getStatus());
+            dto.setStartDate(leave.getStartDate() != null ? leave.getStartDate().toString() : "");
+            dto.setEndDate(leave.getEndDate() != null ? leave.getEndDate().toString() : "");
+            if (leave.getUser() != null) {
+                dto.setUserId(leave.getUser().getId());
+                dto.setFirstName(leave.getUser().getFirstName());
+                dto.setLastName(leave.getUser().getLastName());
+                dto.setEmail(leave.getUser().getEmail());
+            }
+            return dto;
+        }).collect(java.util.stream.Collectors.toList());
     }
 
     // İK: İzin talebini onayla

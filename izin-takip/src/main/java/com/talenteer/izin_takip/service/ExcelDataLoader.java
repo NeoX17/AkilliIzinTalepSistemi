@@ -49,11 +49,15 @@ public class ExcelDataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Sadece bir kere çalışmasını sağlayan flag dosyası kontrolü
-        String flagFile = "src/main/resources/excels/loader_done.flag";
-        if (Files.exists(Paths.get(flagFile))) {
-            System.out.println("Excel yüklemesi daha önce yapılmış, tekrar çalışmayacak.");
-            return;
+        // Her başlatmada flag dosyasını mutlak yol ile sil
+        String flagFile = new File("src/main/resources/excels/loader_done.flag").getAbsolutePath();
+        try {
+            if (Files.exists(Paths.get(flagFile))) {
+                Files.delete(Paths.get(flagFile));
+                System.out.println("Flag dosyası bulundu ve silindi. Yükleme tekrar yapılacak.");
+            }
+        } catch (Exception e) {
+            System.out.println("Flag dosyası silinemedi: " + e.getMessage());
         }
         System.out.println("ExcelDataLoader başlatıldı. Tüm Excel dosyaları okunacak...");
 
@@ -90,6 +94,10 @@ public class ExcelDataLoader implements CommandLineRunner {
                     Long calisanId = (long) idCell.getNumericCellValue();
 
                     String adSoyad = getCellStringValue(row.getCell(1));
+                    String[] isimParcalar = adSoyad.trim().split(" ");
+                    String firstName = isimParcalar.length > 0 ? isimParcalar[0] : "";
+                    String lastName = isimParcalar.length > 1 ? String.join(" ", java.util.Arrays.copyOfRange(isimParcalar, 1, isimParcalar.length)) : "";
+                    String email = firstName.toLowerCase() + "." + lastName.toLowerCase().replace(" ", "") + "@example.com";
                     String pozisyon = getCellStringValue(row.getCell(2));
                     String unvan = getCellStringValue(row.getCell(3));
                     String iseBaslama = getCellStringValue(row.getCell(4));
@@ -112,12 +120,13 @@ public class ExcelDataLoader implements CommandLineRunner {
                     User user = userMap.get(calisanId);
                     if (user == null) {
                         user = new User();
-                        // Email formatında kullanıcı adı oluştur
                         user.setUsername(adSoyad.replace(" ", "").toLowerCase() + "@example.com");
-                        // Varsayılan şifre
                         user.setPassword("1234");
                         user.setRole(unvan.equalsIgnoreCase("İK") ? "HR" : "EMPLOYEE");
                         user.setDepartment(pozisyon);
+                        user.setFirstName(firstName);
+                        user.setLastName(lastName);
+                        user.setEmail(email);
                         user = userRepository.save(user);
                         userMap.put(calisanId, user);
                     }
@@ -145,5 +154,11 @@ public class ExcelDataLoader implements CommandLineRunner {
         System.out.println("Tüm Excel dosyaları işlendi.");
         // Flag dosyasını oluştur
         Files.createFile(Paths.get(flagFile));
+
+        // Tüm izin taleplerini 'Bekliyor' durumuna getir
+        leaveRequestRepository.findAll().forEach(lr -> {
+            lr.setStatus("Bekliyor");
+            leaveRequestRepository.save(lr);
+        });
     }
 } 

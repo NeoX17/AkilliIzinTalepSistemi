@@ -1,3 +1,0 @@
-2025-05-10 14:37:46.941203+03:00 jdbc[14]: exception
-org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "LEAVE_REQUESTS" not found; SQL statement:
-SELECT * FROM LEAVE_REQUESTS [42102-224]

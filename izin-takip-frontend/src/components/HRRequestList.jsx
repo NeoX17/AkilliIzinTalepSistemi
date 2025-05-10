@@ -78,7 +78,8 @@ const HRRequestList = ({ requests, onStatusChange, onAnalyze }) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>İsim Soyisim</TableCell>
+              <TableCell>İsim</TableCell>
+              <TableCell>Soyisim</TableCell>
               <TableCell>E-posta</TableCell>
               <TableCell>Başlangıç</TableCell>
               <TableCell>Bitiş</TableCell>
@@ -90,7 +91,8 @@ const HRRequestList = ({ requests, onStatusChange, onAnalyze }) => {
           <TableBody>
             {displayRequests().map((request) => (
               <TableRow key={request.id}>
-                <TableCell>{request.employeeName}</TableCell>
+                <TableCell>{request.firstName}</TableCell>
+                <TableCell>{request.lastName}</TableCell>
                 <TableCell>{request.email || 'N/A'}</TableCell>
                 <TableCell>{format(new Date(request.startDate), 'dd.MM.yyyy')}</TableCell>
                 <TableCell>{format(new Date(request.endDate), 'dd.MM.yyyy')}</TableCell>
