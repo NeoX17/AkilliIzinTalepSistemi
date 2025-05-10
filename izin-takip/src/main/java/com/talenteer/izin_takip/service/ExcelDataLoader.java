@@ -1,0 +1,110 @@
+package com.talenteer.izin_takip.service;
+
+import com.talenteer.izin_takip.model.User;
+import com.talenteer.izin_takip.model.LeaveRequest;
+import com.talenteer.izin_takip.repository.UserRepository;
+import com.talenteer.izin_takip.repository.LeaveRequestRepository;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
+
+import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+
+@Component
+public class ExcelDataLoader implements CommandLineRunner {
+    private final UserRepository userRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
+
+    public ExcelDataLoader(UserRepository userRepository, LeaveRequestRepository leaveRequestRepository) {
+        this.userRepository = userRepository;
+        this.leaveRequestRepository = leaveRequestRepository;
+    }
+
+    private String getCellStringValue(Cell cell) {
+        if (cell == null) return "";
+        if (cell.getCellType() == CellType.STRING) {
+            return cell.getStringCellValue();
+        } else if (cell.getCellType() == CellType.NUMERIC) {
+            double d = cell.getNumericCellValue();
+            if (d == (int) d) {
+                return String.valueOf((int) d);
+            } else {
+                return String.valueOf(d);
+            }
+        } else {
+            return "";
+        }
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        InputStream is = new ClassPathResource("izinler.xlsx").getInputStream();
+        Workbook workbook = new XSSFWorkbook(is);
+        Sheet sheet = workbook.getSheetAt(0);
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        Map<Long, User> userMap = new HashMap<>();
+
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) { // 0. satır başlık
+            Row row = sheet.getRow(i);
+            if (row == null) continue;
+
+            // ID hücresini güvenli oku
+            Cell idCell = row.getCell(0);
+            if (idCell == null || idCell.getCellType() != CellType.NUMERIC) continue;
+            Long calisanId = (long) idCell.getNumericCellValue();
+
+            String adSoyad = getCellStringValue(row.getCell(1));
+            String pozisyon = getCellStringValue(row.getCell(2));
+            String unvan = getCellStringValue(row.getCell(3));
+            String iseBaslama = getCellStringValue(row.getCell(4));
+
+            // Kullanılan izin ve kalan izin için güvenli okuma
+            Cell kullanilanIzinCell = row.getCell(5);
+            if (kullanilanIzinCell == null || kullanilanIzinCell.getCellType() != CellType.NUMERIC) continue;
+            int kullanilanIzin = (int) kullanilanIzinCell.getNumericCellValue();
+
+            Cell kalanIzinCell = row.getCell(6);
+            if (kalanIzinCell == null || kalanIzinCell.getCellType() != CellType.NUMERIC) continue;
+            int kalanIzin = (int) kalanIzinCell.getNumericCellValue();
+
+            String talepOlusturma = getCellStringValue(row.getCell(7));
+            String talepTarihleri = getCellStringValue(row.getCell(8));
+            String talepDurumu = getCellStringValue(row.getCell(9));
+            String talepAciklama = getCellStringValue(row.getCell(10));
+
+            // User ekle (ID'ye göre tekrar ekleme)
+            User user = userMap.get(calisanId);
+            if (user == null) {
+                user = new User();
+                user.setUsername(adSoyad.replace(" ", "").toLowerCase());
+                user.setPassword("1234"); // default şifre
+                user.setRole(unvan.equalsIgnoreCase("İK") ? "HR" : "EMPLOYEE");
+                user.setDepartment(pozisyon);
+                user = userRepository.save(user);
+                userMap.put(calisanId, user);
+            }
+
+            // Talep edilen izin tarihlerini ayır
+            if (talepTarihleri == null || !talepTarihleri.contains("-")) continue;
+            String[] tarihAralik = talepTarihleri.split("-");
+            if (tarihAralik.length < 2) continue;
+            LocalDate startDate = LocalDate.parse(tarihAralik[0].trim(), dateFormatter);
+            LocalDate endDate = LocalDate.parse(tarihAralik[1].trim(), dateFormatter);
+
+            LeaveRequest leave = new LeaveRequest();
+            leave.setUser(user);
+            leave.setStartDate(startDate);
+            leave.setEndDate(endDate);
+            leave.setReason(talepAciklama);
+            leave.setStatus(talepDurumu);
+            leaveRequestRepository.save(leave);
+        }
+        workbook.close();
+    }
+} 
