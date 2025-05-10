@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -17,7 +17,12 @@ import {
   ListItemIcon,
   ListItemText,
   Fade,
-  Zoom
+  Zoom,
+  Avatar,
+  Rating,
+  LinearProgress,
+  IconButton,
+  MobileStepper
 } from '@mui/material';
 import {
   Analytics,
@@ -43,7 +48,13 @@ import {
   Approval,
   AccessTime,
   History,
-  NotificationsActive
+  NotificationsActive,
+  FormatQuote,
+  EmojiEvents,
+  SentimentSatisfied,
+  SentimentVerySatisfied,
+  KeyboardArrowLeft,
+  KeyboardArrowRight
 } from '@mui/icons-material';
 
 const FeatureCard = ({ icon, title, description, delay, color }) => (
@@ -278,6 +289,220 @@ const ModuleCard = ({ title, description, icon, features, color }) => (
   </Fade>
 );
 
+const TestimonialCard = ({ name, role, image, comment, rating }) => (
+  <Fade in={true}>
+    <Card 
+      sx={{ 
+        height: '100%',
+        background: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        p: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-8px)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.2)'
+        }
+      }}
+    >
+      <Avatar
+        src={image}
+        sx={{ 
+          width: 100, 
+          height: 100, 
+          mb: 3,
+          border: '3px solid rgba(255, 255, 255, 0.2)'
+        }}
+      />
+      <FormatQuote sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 40, mb: 2 }} />
+      <Typography 
+        variant="body1" 
+        sx={{ 
+          color: 'rgba(255, 255, 255, 0.9)',
+          mb: 3,
+          fontStyle: 'italic',
+          fontSize: '1.1rem',
+          lineHeight: 1.8
+        }}
+      >
+        {comment}
+      </Typography>
+      <Rating value={rating} readOnly sx={{ mb: 2 }} />
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          color: 'white',
+          fontWeight: 600,
+          mb: 1
+        }}
+      >
+        {name}
+      </Typography>
+      <Typography 
+        variant="body2" 
+        sx={{ 
+          color: 'rgba(255, 255, 255, 0.7)'
+        }}
+      >
+        {role}
+      </Typography>
+    </Card>
+  </Fade>
+);
+
+const EmployeeCarousel = ({ employees }) => {
+  const [activeStep, setActiveStep] = useState(0);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const handleNext = () => {
+    setActiveStep((prevStep) => (prevStep + 1) % employees.length);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevStep) => (prevStep - 1 + employees.length) % employees.length);
+  };
+
+  return (
+    <Box sx={{ 
+      position: 'relative',
+      width: '100%',
+      maxWidth: '100%',
+      overflow: 'hidden',
+      borderRadius: 4,
+      background: 'rgba(255, 255, 255, 0.05)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255, 255, 255, 0.1)',
+      p: 3
+    }}>
+      <Box sx={{ 
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 3
+      }}>
+        <Box sx={{ 
+          position: 'relative',
+          width: isMobile ? 200 : 250,
+          height: isMobile ? 200 : 250,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          border: '4px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+        }}>
+          <img
+            src={employees[activeStep].image}
+            alt={employees[activeStep].name}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center'
+            }}
+          />
+        </Box>
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ color: 'white', fontWeight: 600, mb: 1 }}>
+            {employees[activeStep].name}
+          </Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 2 }}>
+            {employees[activeStep].role}
+          </Typography>
+          <Rating 
+            value={5} 
+            readOnly 
+            sx={{ 
+              mb: 2,
+              '& .MuiRating-iconFilled': {
+                color: '#ffd700'
+              }
+            }} 
+          />
+          <Box sx={{ 
+            position: 'relative',
+            mt: 2,
+            p: 2,
+            borderRadius: 2,
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <FormatQuote sx={{ 
+              color: 'rgba(255, 255, 255, 0.3)', 
+              fontSize: 40, 
+              position: 'absolute',
+              top: -10,
+              left: 10
+            }} />
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontStyle: 'italic',
+                fontSize: '1.1rem',
+                lineHeight: 1.8,
+                pl: 4,
+                pr: 2
+              }}
+            >
+              {employees[activeStep].quote}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+      <Box sx={{ 
+        display: 'flex',
+        justifyContent: 'center',
+        mt: 3,
+        gap: 2
+      }}>
+        <IconButton 
+          onClick={handleBack}
+          sx={{ 
+            color: 'white',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.2)'
+            }
+          }}
+        >
+          <KeyboardArrowLeft />
+        </IconButton>
+        <IconButton 
+          onClick={handleNext}
+          sx={{ 
+            color: 'white',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.2)'
+            }
+          }}
+        >
+          <KeyboardArrowRight />
+        </IconButton>
+      </Box>
+      <MobileStepper
+        steps={employees.length}
+        position="static"
+        activeStep={activeStep}
+        sx={{
+          mt: 2,
+          backgroundColor: 'transparent',
+          '& .MuiMobileStepper-dot': {
+            backgroundColor: 'rgba(255, 255, 255, 0.3)'
+          },
+          '& .MuiMobileStepper-dotActive': {
+            backgroundColor: 'white'
+          }
+        }}
+      />
+    </Box>
+  );
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -361,6 +586,51 @@ const Home = () => {
         'Çalışan izin limitleri',
         'Sistem ayarları'
       ]
+    }
+  ];
+
+  const employees = [
+    {
+      name: "Ahmet Yılmaz",
+      role: "Proje Müdürü",
+      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
+      quote: "Talenteer'da çalışmak benim için büyük bir ayrıcalık. İzin yönetim sistemimiz sayesinde iş-yaşam dengesini çok daha iyi kurabiliyorum."
+    },
+    {
+      name: "Ayşe Demir",
+      role: "İK Uzmanı",
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=688&q=80",
+      quote: "Yeni izin yönetim sistemimiz sayesinde tüm süreçler çok daha şeffaf ve verimli hale geldi. Çalışanlarımızın memnuniyeti gözle görülür şekilde arttı."
+    },
+    {
+      name: "Mehmet Kaya",
+      role: "Mühendis",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
+      quote: "İzin taleplerimi kolayca oluşturabiliyor ve takip edebiliyorum. Sistem gerçekten kullanıcı dostu ve pratik."
+    },
+    {
+      name: "Zeynep Şahin",
+      role: "Mimar",
+      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=761&q=80",
+      quote: "İzin planlamamı yaparken takvim entegrasyonu çok işime yarıyor. Artık iş ve özel hayatımı çok daha iyi dengeleyebiliyorum."
+    }
+  ];
+
+  const satisfactionMetrics = [
+    {
+      title: "İzin Kullanım Memnuniyeti",
+      value: 95,
+      icon: <SentimentVerySatisfied sx={{ color: '#4caf50', fontSize: 40 }} />
+    },
+    {
+      title: "Sistem Kullanım Kolaylığı",
+      value: 92,
+      icon: <EmojiEvents sx={{ color: '#ff9800', fontSize: 40 }} />
+    },
+    {
+      title: "Genel Memnuniyet",
+      value: 94,
+      icon: <SentimentSatisfied sx={{ color: '#2196f3', fontSize: 40 }} />
     }
   ];
 
@@ -541,6 +811,35 @@ const Home = () => {
           </Grid>
         </Box>
 
+        {/* Employee Carousel Section */}
+        <Box sx={{ mb: 12 }}>
+          <Typography
+            variant="h3"
+            sx={{
+              color: 'white',
+              textAlign: 'center',
+              mb: 8,
+              fontWeight: 800,
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -16,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 80,
+                height: 4,
+                background: 'linear-gradient(90deg, transparent, #fff, transparent)',
+                borderRadius: 2
+              }
+            }}
+          >
+            Çalışanlarımız
+          </Typography>
+          <EmployeeCarousel employees={employees} />
+        </Box>
+
         {/* Statistics Section */}
         <Box
           sx={{
@@ -650,6 +949,76 @@ const Home = () => {
                 </Typography>
               </Box>
             </Grid>
+          </Grid>
+        </Box>
+
+        {/* Satisfaction Metrics Section */}
+        <Box 
+          sx={{ 
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 4,
+            p: 6,
+            mb: 8,
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
+          <Typography
+            variant="h4"
+            sx={{
+              color: 'white',
+              textAlign: 'center',
+              mb: 6,
+              fontWeight: 700,
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            }}
+          >
+            Memnuniyet Metrikleri
+          </Typography>
+          <Grid container spacing={4}>
+            {satisfactionMetrics.map((metric, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <Box sx={{ textAlign: 'center', mb: 3 }}>
+                  {metric.icon}
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      color: 'white',
+                      mt: 2,
+                      mb: 2
+                    }}
+                  >
+                    {metric.title}
+                  </Typography>
+                  <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                    <Typography
+                      variant="h3"
+                      sx={{
+                        color: 'white',
+                        fontWeight: 700,
+                        textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+                      }}
+                    >
+                      {metric.value}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={metric.value} 
+                    sx={{ 
+                      height: 8,
+                      borderRadius: 4,
+                      mt: 2,
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 4,
+                        backgroundColor: metric.icon.props.color
+                      }
+                    }}
+                  />
+                </Box>
+              </Grid>
+            ))}
           </Grid>
         </Box>
       </Container>
