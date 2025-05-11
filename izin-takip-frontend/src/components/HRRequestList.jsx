@@ -146,16 +146,16 @@ const HRRequestList = ({ requests, onStatusChange, onAnalyze }) => {
                 {activeTab === 0 && (
                   <TableCell>
                     <Stack direction="row" spacing={1}>
-                      <Button
+                    <Button 
                         variant="outlined"
                         color="info"
                         onClick={() => handleAiAnalyze(request)}
                         startIcon={<TipsAndUpdatesIcon />}
                         disabled={aiLoading[request.id]}
-                      >
+                    >
                         {aiLoading[request.id] ? <CircularProgress size={18} /> : 'Öneri'}
-                      </Button>
-                      <Button
+                    </Button>
+                    <Button 
                         variant="contained"
                         color="success"
                         onClick={() => handleStatusChange(request.id, 'approved')}
@@ -163,8 +163,8 @@ const HRRequestList = ({ requests, onStatusChange, onAnalyze }) => {
                       />
                       <Button
                         variant="contained"
-                        color="error"
-                        onClick={() => handleStatusChange(request.id, 'rejected')}
+                      color="error" 
+                      onClick={() => handleStatusChange(request.id, 'rejected')}
                         startIcon={<CloseIcon />}
                       />
                     </Stack>
