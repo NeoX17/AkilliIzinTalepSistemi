@@ -1,7 +1,7 @@
 package com.talenteer.izin_takip.service;
 
 import com.talenteer.izin_takip.model.LeaveRequest;
-import com.talenteer.izintakip.model.User;
+import com.talenteer.izin_takip.model.User;
 import com.talenteer.izin_takip.repository.UserRepository;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;

@@ -78,11 +78,12 @@ const Login = () => {
 
     try {
       const response = await login(formData);
-      const { token, role } = response.data;
-
+      const { token, role, userId } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('userRole', role);
-
+      if (userId) {
+        localStorage.setItem('userId', userId);
+      }
       navigate(role === 'hr' ? '/hr' : '/employee');
     } catch (err) {
       setError(err.response?.data?.message || 'Giriş yapılırken bir hata oluştu');

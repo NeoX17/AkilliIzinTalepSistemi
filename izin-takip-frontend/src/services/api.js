@@ -15,6 +15,19 @@ const api = axios.create({
   },
 });
 
+// --- TOKEN INTERCEPTOR EKLEME ---
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+// --- TOKEN INTERCEPTOR SONU ---
+
 // Status değerlerini eşleştirme fonksiyonu 
 const mapStatusForFrontend = (status) => {
   if (!status) return 'pending';
@@ -151,7 +164,7 @@ export const getEmployeeLeaveRequests = async (employeeId) => {
       data: mockRequests.filter(request => request.employeeId === employeeId)
     };
   }
-  return processResponse(await api.get(`/leave/my?username=${employeeId}`));
+  return processResponse(await api.get(`/leave/my?userId=${employeeId}`));
 };
 
 export const createLeaveRequest = async (requestData) => {
@@ -167,7 +180,7 @@ export const createLeaveRequest = async (requestData) => {
   }
   
   const payload = {
-    username: requestData.employeeId,
+    employeeId: requestData.employeeId,
     startDate: requestData.startDate,
     endDate: requestData.endDate,
     reason: requestData.reason

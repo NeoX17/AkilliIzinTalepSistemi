@@ -28,6 +28,7 @@ public class AuthController {
             Map<String, Object> response = new HashMap<>();
             response.put("token", "mock-token-hr");
             response.put("role", "hr");
+            response.put("userId", "hr1");
             return response;
         }
         
@@ -35,15 +36,19 @@ public class AuthController {
             Map<String, Object> response = new HashMap<>();
             response.put("token", "mock-token-employee");
             response.put("role", "employee");
+            response.put("userId", "emp1");
             return response;
         }
         
         // Normal kullanıcı kontrolü
         User user = userRepository.findByUsername(username);
-        if (user != null && user.getPassword().equals(password)) {
+        if (user != null && user.getPassword() != null && user.getPassword().equals(password)) {
             Map<String, Object> response = new HashMap<>();
             response.put("token", "mock-token-" + user.getRole().toLowerCase());
             response.put("role", user.getRole().toLowerCase());
+            if (user.getId() != null) {
+                response.put("userId", user.getId());
+            }
             return response;
         }
         

@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/leave")
@@ -29,8 +31,13 @@ public class LeaveRequestController {
 
     // Çalışan: Kendi izin taleplerini gör
     @GetMapping("/my")
-    public List<LeaveRequest> getMyLeaves(@RequestParam String username) {
-        User user = userRepository.findByUsername(username);
+    public List<LeaveRequest> getMyLeaves(@RequestParam(required = false) String username, @RequestParam(required = false) Long userId) {
+        User user = null;
+        if (userId != null) {
+            user = userRepository.findById(userId).orElse(null);
+        } else if (username != null) {
+            user = userRepository.findByUsername(username);
+        }
         if (user == null) return List.of();
         return leaveRequestRepository.findByUserId(user.getId());
     }
@@ -38,15 +45,31 @@ public class LeaveRequestController {
     // Çalışan: Yeni izin talebi oluştur
     @PostMapping("/create")
     public LeaveRequest createLeave(@RequestBody Map<String, String> body) {
-        User user = userRepository.findByUsername(body.get("username"));
-        if (user == null) return null;
+        User user = null;
+        // Önce employeeId ile bulmayı dene
+        if (body.containsKey("employeeId")) {
+            try {
+                user = userRepository.findById(Long.parseLong(body.get("employeeId"))).orElse(null);
+            } catch (Exception e) {
+                // id parse edilemiyorsa username ile devam et
+            }
+        }
+        // Eğer employeeId yoksa veya bulunamazsa username ile dene
+        if (user == null && body.containsKey("username")) {
+            user = userRepository.findByUsername(body.get("username"));
+        }
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kullanıcı bulunamadı");
+        }
         LeaveRequest leave = new LeaveRequest();
         leave.setUser(user);
         leave.setStartDate(java.time.LocalDate.parse(body.get("startDate")));
         leave.setEndDate(java.time.LocalDate.parse(body.get("endDate")));
         leave.setReason(body.get("reason"));
-        leave.setStatus("Bekliyor"); // "PENDING" yerine "Bekliyor" kullanacağız
-        return leaveRequestRepository.save(leave);
+        leave.setStatus("Bekliyor");
+        LeaveRequest saved = leaveRequestRepository.save(leave);
+        System.out.println("Yeni izin kaydedildi: id=" + saved.getId() + ", user=" + user.getUsername() + ", tarih=" + saved.getStartDate() + " - " + saved.getEndDate());
+        return saved;
     }
 
     // DTO sınıfı
@@ -132,5 +155,12 @@ public class LeaveRequestController {
                 .collect(Collectors.toList());
         excelExportService.exportToExcel(rejectedList, "rejected_leaves.xlsx");
         return updated;
+    }
+
+    // Test endpointi
+    @GetMapping("/test-log")
+    public String testLog() {
+        System.out.println("testLog endpoint çalıştı!");
+        return "OK";
     }
 } 

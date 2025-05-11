@@ -10,7 +10,8 @@ import {
   CircularProgress
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
-import { getAllLeaveRequests, createLeaveRequest } from '../services/api';
+import { getEmployeeLeaveRequests, createLeaveRequest } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const EmployeePanel = () => {
   const [requests, setRequests] = useState([]);
@@ -21,18 +22,24 @@ const EmployeePanel = () => {
     endDate: null,
     reason: ''
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchRequests();
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      navigate('/login');
+      return;
+    }
+    fetchRequests(userId);
   }, []);
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (userId) => {
     setLoading(true);
     try {
-      const response = await getAllLeaveRequests();
+      const response = await getEmployeeLeaveRequests(userId);
       setRequests(response.data);
       setError('');
-    } catch (err) {
+    } catch {
       setError('İzin talepleri yüklenirken bir hata oluştu');
     } finally {
       setLoading(false);
@@ -41,18 +48,38 @@ const EmployeePanel = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.startDate || !formData.endDate || !formData.reason.trim()) {
+      setError('Lütfen tüm alanları doldurun.');
+      return;
+    }
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      setError('Kullanıcı oturumu bulunamadı, lütfen tekrar giriş yapın.');
+      setLoading(false);
+      navigate('/login');
+      return;
+    }
     setLoading(true);
     try {
-      await createLeaveRequest(formData);
+      await createLeaveRequest({
+        employeeId: userId,
+        startDate: formData.startDate ? formData.startDate.toISOString().slice(0, 10) : '',
+        endDate: formData.endDate ? formData.endDate.toISOString().slice(0, 10) : '',
+        reason: formData.reason
+      });
       setFormData({
         startDate: null,
         endDate: null,
         reason: ''
       });
-      await fetchRequests();
+      await fetchRequests(userId);
       setError('');
     } catch (err) {
-      setError('İzin talebi oluşturulurken bir hata oluştu');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('İzin talebi oluşturulurken bir hata oluştu');
+      }
     } finally {
       setLoading(false);
     }
