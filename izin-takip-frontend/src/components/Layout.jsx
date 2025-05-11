@@ -28,6 +28,7 @@ const Layout = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const userRole = localStorage.getItem('userRole');
+  const userName = localStorage.getItem('userName');
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -83,6 +84,10 @@ const Layout = () => {
           </IconButton>
           <Typography variant="h6" noWrap component="div">
             {userRole === 'hr' ? 'İK Yönetim Paneli' : 'Çalışan Paneli'}
+          </Typography>
+          <Box sx={{ flexGrow: 1 }} />
+          <Typography variant="subtitle1" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+            {userRole === 'hr' ? 'admin' : userName || ''}
           </Typography>
         </Toolbar>
       </AppBar>
