@@ -78,11 +78,14 @@ const Login = () => {
 
     try {
       const response = await login(formData);
-      const { token, role, userId } = response.data;
+      const { token, role, userId, name } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('userRole', role);
       if (userId) {
         localStorage.setItem('userId', userId);
+      }
+      if (name) {
+        localStorage.setItem('userName', name);
       }
       navigate(role === 'hr' ? '/hr' : '/employee');
     } catch (err) {

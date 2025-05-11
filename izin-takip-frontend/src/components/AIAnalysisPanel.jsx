@@ -1,320 +1,208 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  CircularProgress,
-  Paper,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Chip,
-  Button,
-  TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel
-} from '@mui/material';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
-import {
-  TrendingUp,
-  TrendingDown,
-  Warning,
-  CheckCircle,
-  Error,
-  Info,
-  FilterList,
-  Download
-} from '@mui/icons-material';
+import React, { useEffect, useState } from 'react';
+import { getAllLeaveRequests } from '../services/api';
+import { Box, Typography, Grid, Paper, List, ListItem, ListItemText, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts';
 
-const AIAnalysisPanel = ({ requests }) => {
-  const [timeRange, setTimeRange] = useState('month');
-  const [department, setDepartment] = useState('all');
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A020F0', '#FF69B4', '#00CED1', '#FFA500'];
 
-  // Örnek veri - gerçek uygulamada API'den gelecek
-  const analysisData = {
-    approvalRate: 75,
-    averageResponseTime: 2.5,
-    trends: [
-      { name: 'Ocak', onaylanan: 65, reddedilen: 15, bekleyen: 20 },
-      { name: 'Şubat', onaylanan: 70, reddedilen: 10, bekleyen: 20 },
-      { name: 'Mart', onaylanan: 75, reddedilen: 5, bekleyen: 20 },
-      { name: 'Nisan', onaylanan: 80, reddedilen: 5, bekleyen: 15 },
-    ],
-    departmentStats: [
-      { name: 'IT', value: 35 },
-      { name: 'İK', value: 25 },
-      { name: 'Satış', value: 20 },
-      { name: 'Pazarlama', value: 20 },
-    ],
-    insights: [
-      {
-        type: 'positive',
-        title: 'Onay Oranı Artışı',
-        description: 'Son 3 ayda onay oranı %15 arttı',
-        icon: <TrendingUp />
-      },
-      {
-        type: 'warning',
-        title: 'Yanıt Süresi',
-        description: 'IT departmanında yanıt süreleri ortalamanın üzerinde',
-        icon: <Warning />
-      },
-      {
-        type: 'info',
-        title: 'Talep Yoğunluğu',
-        description: 'Pazartesi günleri talep yoğunluğu en yüksek seviyede',
-        icon: <Info />
+const AIAnalysisPanel = () => {
+  const [stats, setStats] = useState({
+    total: 0,
+    approved: 0,
+    rejected: 0,
+    byDepartment: {},
+    byAIResult: {}
+  });
+  const [leaveRequests, setLeaveRequests] = useState([]); // ham veri
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const { data } = await getAllLeaveRequests();
+        // TEST: Yapay veri ekle
+        data.push({
+          department: "Test Departmanı",
+          status: "rejected",
+          aiResult: "kıdem"
+        });
+        setLeaveRequests(data); // ham veriyi kaydet
+        const total = data.length;
+        const approved = data.filter(r => r.status === 'approved').length;
+        const rejected = data.filter(r => r.status === 'rejected').length;
+        const byDepartment = {};
+        data.forEach(r => {
+          if (r.department) byDepartment[r.department] = (byDepartment[r.department] || 0) + 1;
+        });
+        const byAIResult = {};
+        data.forEach(r => {
+          if (r.aiResult) byAIResult[r.aiResult] = (byAIResult[r.aiResult] || 0) + 1;
+        });
+        setStats({ total, approved, rejected, byDepartment, byAIResult });
+      } catch {
+        setStats({ total: 0, approved: 0, rejected: 0, byDepartment: {}, byAIResult: {} });
+        setLeaveRequests([]);
       }
-    ]
-  };
+    }
+    fetchData();
+  }, []);
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  // Departman verisini PieChart için diziye çevir
+  const departmentData = Object.entries(stats.byDepartment).map(([name, value]) => ({ name, value }));
+
+  // Ay bazlı dağılımı hesapla
+  const byMonth = {};
+  leaveRequests.forEach(r => {
+    const dateStr = r.startDate || r.start_date || r.start;
+    if (dateStr) {
+      const date = new Date(dateStr);
+      const month = date.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+      byMonth[month] = (byMonth[month] || 0) + 1;
+    }
+  });
+  // Ayları kronolojik sırala
+  const monthMap = {
+    'Ocak': 0, 'Şubat': 1, 'Mart': 2, 'Nisan': 3, 'Mayıs': 4, 'Haziran': 5,
+    'Temmuz': 6, 'Ağustos': 7, 'Eylül': 8, 'Ekim': 9, 'Kasım': 10, 'Aralık': 11
+  };
+  const sortedMonthArray = Object.entries(byMonth)
+    .map(([ay, count]) => {
+      const [monthName, year] = ay.split(' ');
+      const monthIndex = monthMap[monthName];
+      return { ay, count, date: new Date(Number(year), monthIndex, 1) };
+    })
+    .sort((a, b) => a.date - b.date)
+    .map(({ ay, count }) => ({ ay, count }));
+
+  console.log('leaveRequests:', leaveRequests);
+  if (leaveRequests && leaveRequests.length > 0) {
+    console.log('İlk 3 kayıt:', leaveRequests.slice(0, 3));
+    leaveRequests.slice(0, 3).forEach((r, i) => {
+      console.log(`Kayıt ${i + 1}: department=${r.department}, status=${r.status}, aiResult=${r.aiResult}`);
+    });
+  }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
-        AI Analiz Paneli
-      </Typography>
-
-      {/* Filtreler */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={4}>
-            <FormControl fullWidth>
-              <InputLabel>Zaman Aralığı</InputLabel>
-              <Select
-                value={timeRange}
-                label="Zaman Aralığı"
-                onChange={(e) => setTimeRange(e.target.value)}
-              >
-                <MenuItem value="week">Son 1 Hafta</MenuItem>
-                <MenuItem value="month">Son 1 Ay</MenuItem>
-                <MenuItem value="quarter">Son 3 Ay</MenuItem>
-                <MenuItem value="year">Son 1 Yıl</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <FormControl fullWidth>
-              <InputLabel>Departman</InputLabel>
-              <Select
-                value={department}
-                label="Departman"
-                onChange={(e) => setDepartment(e.target.value)}
-              >
-                <MenuItem value="all">Tüm Departmanlar</MenuItem>
-                <MenuItem value="it">IT</MenuItem>
-                <MenuItem value="hr">İK</MenuItem>
-                <MenuItem value="sales">Satış</MenuItem>
-                <MenuItem value="marketing">Pazarlama</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Button
-              variant="contained"
-              startIcon={<Download />}
-              fullWidth
-            >
-              Rapor İndir
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {/* Özet Kartları */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Onay Oranı
-              </Typography>
-              <Typography variant="h4" component="div">
-                %{analysisData.approvalRate}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <TrendingUp color="success" />
-                <Typography variant="body2" color="success.main" sx={{ ml: 1 }}>
-                  +5% geçen aya göre
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Ortalama Yanıt Süresi
-              </Typography>
-              <Typography variant="h4" component="div">
-                {analysisData.averageResponseTime} gün
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <TrendingDown color="error" />
-                <Typography variant="body2" color="error.main" sx={{ ml: 1 }}>
-                  -0.5 gün geçen aya göre
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Toplam Talep
-              </Typography>
-              <Typography variant="h4" component="div">
-                156
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <TrendingUp color="success" />
-                <Typography variant="body2" color="success.main" sx={{ ml: 1 }}>
-                  +12% geçen aya göre
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Aktif Talepler
-              </Typography>
-              <Typography variant="h4" component="div">
-                23
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <Info color="info" />
-                <Typography variant="body2" color="info.main" sx={{ ml: 1 }}>
-                  Ortalama bekleme süresi: 1.2 gün
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Grafikler */}
+    <Box>
+      <Typography variant="h5" gutterBottom>AI Analiz Paneli</Typography>
       <Grid container spacing={2}>
-        <Grid item xs={12} md={8}>
-          <Card sx={{ width: '100%' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-                Talep Trendleri
-              </Typography>
-              <Box sx={{ height: 250, width: '100%' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart 
-                    data={analysisData.trends}
-                    margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
-                      padding={{ left: 10, right: 10 }}
-                    />
-                    <YAxis width={50} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="onaylanan" fill="#2e7d32" name="Onaylanan" />
-                    <Bar dataKey="reddedilen" fill="#d32f2f" name="Reddedilen" />
-                    <Bar dataKey="bekleyen" fill="#ed6c02" name="Bekleyen" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Box>
-            </CardContent>
-          </Card>
+        <Grid item xs={12} sm={4}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6">Toplam İzin Talebi</Typography>
+            <Typography variant="h4">{stats.total}</Typography>
+          </Paper>
         </Grid>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ width: '100%' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
-                Departman Dağılımı
-              </Typography>
-              <Box sx={{ height: 250, width: '100%' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={analysisData.departmentStats}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {analysisData.departmentStats.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend 
-                      layout="vertical"
-                      verticalAlign="middle"
-                      align="right"
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+        <Grid item xs={6} sm={4}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6">Onaylanan</Typography>
+            <Typography variant="h4">{stats.approved}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={6} sm={4}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6">Reddedilen</Typography>
+            <Typography variant="h4">{stats.rejected}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Paper sx={{ p: 2, minHeight: 370 }}>
+            <Typography variant="subtitle1">Departman Bazlı Dağılım</Typography>
+            <Box sx={{ width: '100%', height: 300, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <ResponsiveContainer width={250} height={200}>
+                <PieChart>
+                  <Pie
+                    data={departmentData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={70}
+                    fill="#8884d8"
+                  >
+                    {departmentData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <Box sx={{ mt: 2, width: 220, maxHeight: 120, overflowY: 'auto' }}>
+                {departmentData.map((item, index) => (
+                  <Box key={item.name} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: COLORS[index % COLORS.length], mr: 1 }} />
+                    <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>{item.name}</Typography>
+                  </Box>
+                ))}
               </Box>
-            </CardContent>
-          </Card>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={8}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="subtitle1">Aylara Göre İzin Talebi</Typography>
+            <Box sx={{ width: 400, height: 250, mx: 'auto' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={sortedMonthArray} margin={{ top: 16, right: 16, left: 0, bottom: 16 }}>
+                  <XAxis dataKey="ay" tick={{ fontSize: 12 }} />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="count" fill="#8884d8" name="İzin Talebi" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Box>
+          </Paper>
         </Grid>
       </Grid>
-
-      {/* İçgörüler */}
-      <Card sx={{ mt: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            AI İçgörüleri
-          </Typography>
-          <List>
-            {analysisData.insights.map((insight, index) => (
-              <React.Fragment key={index}>
-                <ListItem>
-                  <ListItemIcon>
-                    {insight.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={insight.title}
-                    secondary={insight.description}
-                  />
-                  <Chip
-                    label={insight.type === 'positive' ? 'Pozitif' : 
-                           insight.type === 'warning' ? 'Uyarı' : 'Bilgi'}
-                    color={insight.type === 'positive' ? 'success' : 
-                           insight.type === 'warning' ? 'warning' : 'info'}
-                    size="small"
-                  />
-                </ListItem>
-                {index < analysisData.insights.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-        </CardContent>
-      </Card>
+      {/* Kural İhlali ve AI Karşılaştırması Tablosu */}
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Kural İhlali ve AI Karşılaştırması
+        </Typography>
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Departman</TableCell>
+                <TableCell>Kural Etiketi</TableCell>
+                <TableCell>Reddedilen Talep Sayısı</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(() => {
+                // Sadece aiResult alanı dolu olanlar (status filtresi yok)
+                const rejectedByAI = leaveRequests.filter(r => r.aiResult && r.aiResult.trim() !== '');
+                const grouped = {};
+                rejectedByAI.forEach(r => {
+                  const dep = r.department || 'Bilinmiyor';
+                  const etiket = r.aiResult || 'Bilinmiyor';
+                  if (!grouped[dep]) grouped[dep] = {};
+                  grouped[dep][etiket] = (grouped[dep][etiket] || 0) + 1;
+                });
+                const tableRows = [];
+                Object.entries(grouped).forEach(([dep, etikets]) => {
+                  Object.entries(etikets).forEach(([etiket, count]) => {
+                    tableRows.push({ department: dep, etiket, count });
+                  });
+                });
+                if (tableRows.length === 0) {
+                  return (
+                    <TableRow>
+                      <TableCell colSpan={3} align="center">AI etiketiyle işaretlenmiş izin talebi bulunamadı.</TableCell>
+                    </TableRow>
+                  );
+                }
+                return tableRows.map((row, i) => (
+                  <TableRow key={i}>
+                    <TableCell>{row.department}</TableCell>
+                    <TableCell>{row.etiket}</TableCell>
+                    <TableCell>{row.count}</TableCell>
+                  </TableRow>
+                ));
+              })()}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
     </Box>
   );
 };

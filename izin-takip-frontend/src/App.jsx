@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import HRPanel from './pages/HRPanel';
 import EmployeePanel from './pages/EmployeePanel';
 import NotFound from './pages/NotFound';
+import Home from './pages/Home';
 
 // Components
 import PrivateRoute from './components/PrivateRoute';
@@ -55,6 +56,7 @@ const theme = createTheme({
 });
 
 const App = () => {
+  const isLoggedIn = !!localStorage.getItem('token');
   return (
     <ThemeProvider theme={theme}>
       <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={trLocale}>
@@ -63,7 +65,8 @@ const App = () => {
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
-            
+            {/* Home açılış ekranı */}
+            <Route path="/" element={isLoggedIn ? <Navigate to={localStorage.getItem('userRole') === 'hr' ? '/hr' : '/employee'} replace /> : <Home />} />
             {/* Protected Routes */}
             <Route element={<Layout />}>
               <Route 
@@ -83,10 +86,6 @@ const App = () => {
                 } 
               />
             </Route>
-
-            {/* Redirect root to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
