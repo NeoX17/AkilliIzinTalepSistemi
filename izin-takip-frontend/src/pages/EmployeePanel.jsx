@@ -7,10 +7,11 @@ import {
   CardContent,
   TextField,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Paper
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
-import { getEmployeeLeaveRequests, createLeaveRequest } from '../services/api';
+import { getEmployeeLeaveRequests, createLeaveRequest, analyzeLeaveRequest } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
 const EmployeePanel = () => {
@@ -22,6 +23,10 @@ const EmployeePanel = () => {
     endDate: null,
     reason: ''
   });
+  const [aiResult, setAiResult] = useState('');
+  const [userDepartment, setUserDepartment] = useState(localStorage.getItem('department') || '');
+  const [userFirstName, setUserFirstName] = useState(localStorage.getItem('firstName') || '');
+  const [userLastName, setUserLastName] = useState(localStorage.getItem('lastName') || '');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +36,25 @@ const EmployeePanel = () => {
       return;
     }
     fetchRequests(userId);
+    // localStorage'da ad/soyad yoksa, ilk izin talebinden al
+    if (!localStorage.getItem('firstName') || !localStorage.getItem('lastName')) {
+      getEmployeeLeaveRequests(userId).then(res => {
+        if (res.data && res.data.length > 0 && res.data[0].user) {
+          if (res.data[0].user.firstName) {
+            setUserFirstName(res.data[0].user.firstName);
+            localStorage.setItem('firstName', res.data[0].user.firstName);
+          }
+          if (res.data[0].user.lastName) {
+            setUserLastName(res.data[0].user.lastName);
+            localStorage.setItem('lastName', res.data[0].user.lastName);
+          }
+          if (res.data[0].user.department) {
+            setUserDepartment(res.data[0].user.department);
+            localStorage.setItem('department', res.data[0].user.department);
+          }
+        }
+      });
+    }
   }, []);
 
   const fetchRequests = async (userId) => {
@@ -74,11 +98,23 @@ const EmployeePanel = () => {
       });
       await fetchRequests(userId);
       setError('');
+      // AI analiz isteği
+      const aiPayload = {
+        employeeId: userId,
+        firstName: userFirstName,
+        lastName: userLastName,
+        startDate: formData.startDate ? formData.startDate.toISOString().slice(0, 10) : '',
+        endDate: formData.endDate ? formData.endDate.toISOString().slice(0, 10) : '',
+        department: userDepartment,
+        reason: formData.reason
+      };
+      const aiResponse = await analyzeLeaveRequest(aiPayload);
+      setAiResult(aiResponse?.result || aiResponse?.error || 'AI cevabı alınamadı.');
     } catch (err) {
       if (err.response && err.response.data && err.response.data.message) {
         setError(err.response.data.message);
       } else {
-        setError('İzin talebi oluşturulurken bir hata oluştu');
+        setError('İzin talebi oluşturulurken bir hata oluştu.');
       }
     } finally {
       setLoading(false);
@@ -169,6 +205,16 @@ const EmployeePanel = () => {
             </CardContent>
           </Card>
         ))
+      )}
+
+      {/* AI Analiz Sonucu */}
+      {aiResult && (
+        <Box sx={{ my: 3 }}>
+          <Typography variant="h6" color="primary">AI Analiz Sonucu</Typography>
+          <Paper sx={{ p: 2, mt: 1 }}>
+            <Typography>{aiResult}</Typography>
+          </Paper>
+        </Box>
       )}
     </Box>
   );

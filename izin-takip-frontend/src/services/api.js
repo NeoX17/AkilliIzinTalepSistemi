@@ -211,21 +211,15 @@ export const updateLeaveStatus = async (requestId, newStatus) => {
   }
 };
 
+export const analyzeLeaveRequest = async (payload) => {
+  const response = await api.post('/ai/analyze', payload);
+  return response.data;
+};
+
 export const analyzeLeaveRequests = async () => {
-  if (USE_MOCK_DATA) {
-    await delay(1000);
-    return {
-      data: {
-        totalRequests: mockRequests.length,
-        approvedRequests: mockRequests.filter(r => r.status === 'approved').length,
-        pendingRequests: mockRequests.filter(r => r.status === 'pending').length,
-        rejectedRequests: mockRequests.filter(r => r.status === 'rejected').length,
-        averageDuration: 3.5,
-        mostCommonReason: 'Tatil'
-      }
-    };
-  }
-  return await api.get('/ai/analyze');
+  // HR paneli için toplu analiz (örnek)
+  // Burada backend'de toplu analiz endpoint'in varsa ona uygun şekilde güncelleyebilirsin.
+  return { data: { result: "Toplu analiz özelliği henüz aktif değil." } };
 };
 
 // Excel dosyasından içe aktarma API

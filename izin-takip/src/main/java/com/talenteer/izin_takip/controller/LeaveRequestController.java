@@ -83,6 +83,7 @@ public class LeaveRequestController {
         private String firstName;
         private String lastName;
         private String email;
+        private String department;
         // getter/setter
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
@@ -102,6 +103,8 @@ public class LeaveRequestController {
         public void setLastName(String lastName) { this.lastName = lastName; }
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
+        public String getDepartment() { return department; }
+        public void setDepartment(String department) { this.department = department; }
     }
 
     // İK: Tüm izin taleplerini gör
@@ -122,6 +125,7 @@ public class LeaveRequestController {
                 dto.setFirstName(leave.getUser().getFirstName());
                 dto.setLastName(leave.getUser().getLastName());
                 dto.setEmail(leave.getUser().getEmail());
+                dto.setDepartment(leave.getUser().getDepartment());
             }
             return dto;
         }).collect(java.util.stream.Collectors.toList());

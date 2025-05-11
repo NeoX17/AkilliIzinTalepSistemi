@@ -12,12 +12,25 @@ import {
   TableRow,
   Tabs,
   Tab,
-  Chip
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack
 } from '@mui/material';
 import { format } from 'date-fns';
+import { analyzeLeaveRequest } from '../services/api';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
 
 const HRRequestList = ({ requests, onStatusChange, onAnalyze }) => {
   const [activeTab, setActiveTab] = useState(0);
+  const [aiLoading, setAiLoading] = useState({}); // {requestId: true/false}
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogContent, setDialogContent] = useState('');
 
   const handleStatusChange = async (requestId, newStatus) => {
     await onStatusChange(requestId, newStatus);
@@ -51,6 +64,38 @@ const HRRequestList = ({ requests, onStatusChange, onAnalyze }) => {
     const statusColor = status === 'approved' ? 'success' : status === 'rejected' ? 'error' : 'warning';
     
     return <Chip label={statusText} color={statusColor} />;
+  };
+
+  // AI analizi sadece butona basınca çalışacak şekilde fonksiyon
+  const handleAiAnalyze = (req) => {
+    console.log('AI için gönderilen izin:', req);
+    if (!req.userId || !req.firstName || !req.lastName || !req.department) {
+      setDialogContent('AI için eksik bilgi');
+      setOpenDialog(true);
+      return;
+    }
+    setAiLoading(prev => ({ ...prev, [req.id]: true }));
+    analyzeLeaveRequest({
+      employeeId: req.userId,
+      firstName: req.firstName,
+      lastName: req.lastName,
+      startDate: req.startDate,
+      endDate: req.endDate,
+      department: req.department || '',
+      reason: req.reason
+    })
+      .then(res => {
+        const result = res.result || res.error || 'AI cevabı alınamadı.';
+        setDialogContent(result);
+        setOpenDialog(true);
+      })
+      .catch(() => {
+        setDialogContent('AI cevabı alınamadı.');
+        setOpenDialog(true);
+      })
+      .finally(() => {
+        setAiLoading(prev => ({ ...prev, [req.id]: false }));
+      });
   };
 
   return (
@@ -91,32 +136,38 @@ const HRRequestList = ({ requests, onStatusChange, onAnalyze }) => {
           <TableBody>
             {displayRequests().map((request) => (
               <TableRow key={request.id}>
-                <TableCell>{request.firstName}</TableCell>
-                <TableCell>{request.lastName}</TableCell>
-                <TableCell>{request.email || 'N/A'}</TableCell>
+                <TableCell>{request.firstName || ''}</TableCell>
+                <TableCell>{request.lastName || ''}</TableCell>
+                <TableCell>{request.email || ''}</TableCell>
                 <TableCell>{format(new Date(request.startDate), 'dd.MM.yyyy')}</TableCell>
                 <TableCell>{format(new Date(request.endDate), 'dd.MM.yyyy')}</TableCell>
                 <TableCell>{request.reason}</TableCell>
                 <TableCell>{getStatusChip(request.status)}</TableCell>
                 {activeTab === 0 && (
                   <TableCell>
-                    <Button 
-                      size="small" 
-                      color="success" 
-                      variant="contained"
-                      onClick={() => handleStatusChange(request.id, 'approved')}
-                      sx={{ mr: 1 }}
-                    >
-                      Onayla
-                    </Button>
-                    <Button 
-                      size="small" 
-                      color="error" 
-                      variant="contained"
-                      onClick={() => handleStatusChange(request.id, 'rejected')}
-                    >
-                      Reddet
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="outlined"
+                        color="info"
+                        onClick={() => handleAiAnalyze(request)}
+                        startIcon={<TipsAndUpdatesIcon />}
+                        disabled={aiLoading[request.id]}
+                      >
+                        {aiLoading[request.id] ? <CircularProgress size={18} /> : 'Öneri'}
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() => handleStatusChange(request.id, 'approved')}
+                        startIcon={<CheckIcon />}
+                      />
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => handleStatusChange(request.id, 'rejected')}
+                        startIcon={<CloseIcon />}
+                      />
+                    </Stack>
                   </TableCell>
                 )}
               </TableRow>
@@ -131,6 +182,19 @@ const HRRequestList = ({ requests, onStatusChange, onAnalyze }) => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* AI Analiz Sonucu Dialog */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>AI Analiz Sonucu</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+            {dialogContent}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Kapat</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
