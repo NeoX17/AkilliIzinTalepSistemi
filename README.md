@@ -20,4 +20,4 @@ Veritabanı: H2 DB
 
 AI/ML: Python FastAPI
 
-Projemizi birlikte geliştirdiğimiz Bilal Samet Ergüç ve Uğur Coşkun 
+Projemizi birlikte geliştirdiğimiz Samet Ergüç , Uğur Coşkun ve Mehmet Emir Turan 
