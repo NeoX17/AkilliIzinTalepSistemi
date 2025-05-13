@@ -7,9 +7,6 @@ Yapay zeka destekli izin analizi ve karar mekanizması
 
 İzin taleplerinin hızlı ve verimli işlenmesi
 
-Backend: Java Spring Boot
-
-Frontend: React
 
 👨‍💻 Kullanılan Teknolojiler:
 
