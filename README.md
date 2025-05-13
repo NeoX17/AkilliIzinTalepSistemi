@@ -1,4 +1,5 @@
-Bu proje, Datassist ve Filika.co tarafından düzenlenen Talenteer Hackathon Experience etkinliğinde NeoX ekibi tarafından geliştirilmiştir. 🚀
+Bu proje, Datassist ve Filika.co tarafından düzenlenen Talenteer Hackathon Experience etkinliğinde NeoX ekibi olarak tarafımız
+dan geliştirilmiştir. 🚀
 
 💡 Özellikler:
 
